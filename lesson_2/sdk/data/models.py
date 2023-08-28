@@ -94,19 +94,20 @@ class API:
 
 
 class TokenAmount:
-    Wei: int
-    Ether: Decimal
-    decimals: int
+    Wei: int # статический класс
+    Ether: Decimal # статический класс
+    decimals: int # статический класс
 
     def __init__(self, amount: Union[int, float, str, Decimal], decimals: int = 18, wei: bool = False) -> None:
         if wei:
             self.Wei: int = amount
             self.Ether: Decimal = Decimal(str(amount)) / 10 ** decimals
-
+        # конструктор и исключение, если объект веи то тип данных инт и параметр объекта amount
+        # если объект эфир, то тип данных децималы и перевод в веи
         else:
             self.Wei: int = int(Decimal(str(amount)) * 10 ** decimals)
             self.Ether: Decimal = Decimal(str(amount))
-
+        # Если объект не веи, то перевод из веев в эфиры
         self.decimals = decimals
 
     def __str__(self):
@@ -237,16 +238,56 @@ class Networks:
     )
 
     # todo: сделать самостоятельно
-    Fantom = ...
+    Fantom = Network(
+        name='fantom',
+        rpc='https://rpc.ankr.com/fantom',
+        chain_id=250,
+        tx_type=2,
+        coin_symbol='FTM',
+        explorer='https://ftmscan.com/',
+        api=API(
+            key=config.FANTOM_API_KEY, url='https://api.ftmscan.com/', docs='https://docs.ftmscan.com/'
+        )
+    )
 
     # todo: сделать самостоятельно
-    Celo = ...
+    Celo = Network(
+        name='celo',
+        rpc='https://rpc.ankr.com/celo',
+        chain_id=42220,
+        tx_type=2,
+        coin_symbol='CELO',
+        explorer='https://explorer.celo.org/mainnet/',
+        api=API(
+            key=config.CELO_API_KEY, url='https://explorer.celo.org/mainnet/api', docs='https://explorer.celo.org/mainnet/api-docs'
+        )
+    )
 
     # todo: сделать самостоятельно
-    Gnosis = ...
+    Gnosis = Network(
+        name='moonbeam',
+        rpc='https://rpc.ankr.com/gnosis',
+        chain_id=100,
+        tx_type=2,
+        coin_symbol='XDAI',
+        explorer='https://gnosisscan.io/',
+        api=API(
+            key=config.GNOSIS_API_KEY, url='https://api.gnosisscan.io/', docs='https://docs.gnosisscan.io/'
+        )
+    )
 
     # todo: сделать самостоятельно
-    HECO = ...
+    HECO = Network(
+        name='heco',
+        rpc='https://http-mainnet.hecochain.com',
+        chain_id=128,
+        tx_type=2,
+        coin_symbol='HT',
+        explorer='https://www.hecoinfo.com/en-us/home',
+        api=API(
+            key=config.HECO_API_KEY, url='https://api.hecoinfo.com/api', docs='https://www.hecoinfo.com/en-us/apis'
+        )
+    )
 
     # Testnets
     Goerli = Network(
@@ -262,8 +303,21 @@ class Networks:
         )
     )
 
-    # todo: сделать самостоятельно
-    Sepolia = ...
+    """
+    todo: сделать самостоятельно не получается найти апи
+    Sepolia = Network(
+        name='sepolia',
+        rpc='https://sepolia.publicgoods.network',
+        chain_id=58008,
+        tx_type=2,
+        coin_symbol='ETH',
+        explorer='https://explorer.sepolia.publicgoods.network/',
+        api=API(
+            key=config.SEPOLIA_API_KEY, url='https://api-goerli.etherscan.io/api',
+            docs='https://docs.etherscan.io/v/goerli-etherscan/'
+        )
+    )
+   """
 
 
 class Unit:
@@ -305,12 +359,44 @@ class Unit:
             raise ArithmeticError(f"{type(other)} type isn't supported!")
 
     def __sub__(self, other):
-        # todo: сделать самостоятельно
-        pass
+        if isinstance(other, (Unit, TokenAmount)):
+            if self.decimals != other.decimals:
+                raise ArithmeticError('The values have different decimals!')
+
+            return Wei(self.Wei - other.Wei)
+
+        elif isinstance(other, int):
+            return Wei(self.Wei - other)
+
+        elif isinstance(other, float):
+            if self.unit == 'gwei':
+                return GWei(self.GWei - GWei(other).GWei)
+            else:
+                return Ether(self.Ether - Ether(other).Ether)
+
+        else:
+            raise ArithmeticError(f"{type(other)} type isn't supported!")
+
 
     def __mul__(self, other):
-        # todo: сделать самостоятельно
-        pass
+        if isinstance(other, (Unit, TokenAmount)):
+            if self.decimals != other.decimals:
+                raise ArithmeticError('The values have different decimals!')
+
+            return Wei(self.Wei * other.Wei)
+
+        elif isinstance(other, int):
+            return Wei(self.Wei * other)
+
+        elif isinstance(other, float):
+            if self.unit == 'gwei':
+                return GWei(self.GWei * GWei(other).GWei)
+            else:
+                return Ether(self.Ether * Ether(other).Ether / 10 ** 18)
+
+        else:
+            raise ArithmeticError(f"{type(other)} type isn't supported!")
+
 
     def __truediv__(self, other):
         if isinstance(other, (Unit, TokenAmount)):
@@ -327,7 +413,7 @@ class Unit:
                 return GWei(self.GWei / GWei(other).GWei)
 
             else:
-                return Ether(self.Ether / Ether(other).Ether)
+                return Ether(self.Ether / Ether(other).Ether * 10 ** 18)
 
         else:
             raise ArithmeticError(f"{type(other)} type isn't supported!")
@@ -336,12 +422,10 @@ class Unit:
         return self.__add__(other)
 
     def __isub__(self, other):
-        # todo: сделать самостоятельно
-        pass
+        return self.__sub__(other)
 
     def __imul__(self, other):
-        # todo: сделать самостоятельно
-        pass
+        return self.__mul__(other)
 
     def __itruediv__(self, other):
         return self.__truediv__(other)
@@ -367,8 +451,24 @@ class Unit:
             raise ArithmeticError(f"{type(other)} type isn't supported!")
 
     def __le__(self, other):
-        # todo: сделать самостоятельно
-        pass
+        if isinstance(other, (Unit, TokenAmount)):
+            if self.decimals != other.decimals:
+                raise ArithmeticError('The values have different decimals!')
+
+            return self.Wei <= other.Wei
+
+        elif isinstance(other, int):
+            return self.Wei <= other
+
+        elif isinstance(other, float):
+            if self.unit == 'gwei':
+                return self.GWei <= GWei(other).GWei
+
+            else:
+                return self.Ether <= Ether(other).Ether
+
+        else:
+            raise ArithmeticError(f"{type(other)} type isn't supported!")
 
     def __eq__(self, other):
         if isinstance(other, (Unit, TokenAmount)):
@@ -391,8 +491,24 @@ class Unit:
             raise ArithmeticError(f"{type(other)} type isn't supported!")
 
     def __ne__(self, other):
-        # todo: сделать самостоятельно
-        pass
+        if isinstance(other, (Unit, TokenAmount)):
+            if self.decimals != other.decimals:
+                raise ArithmeticError('The values have different decimals!')
+
+            return self.Wei != other.Wei
+
+        elif isinstance(other, int):
+            return self.Wei != other
+
+        elif isinstance(other, float):
+            if self.unit == 'gwei':
+                return self.GWei != GWei(other).GWei
+
+            else:
+                return self.Ether != Ether(other).Ether
+
+        else:
+            raise ArithmeticError(f"{type(other)} type isn't supported!")
 
     def __gt__(self, other):
         if isinstance(other, (Unit, TokenAmount)):
@@ -415,8 +531,24 @@ class Unit:
             raise ArithmeticError(f"{type(other)} type isn't supported!")
 
     def __ge__(self, other):
-        # todo: сделать самостоятельно
-        pass
+        if isinstance(other, (Unit, TokenAmount)):
+            if self.decimals != other.decimals:
+                raise ArithmeticError('The values have different decimals!')
+
+            return self.Wei >= other.Wei
+
+        elif isinstance(other, int):
+            return self.Wei >= other
+
+        elif isinstance(other, float):
+            if self.unit == 'gwei':
+                return self.GWei >= GWei(other).GWei
+
+            else:
+                return self.Ether >= Ether(other).Ether
+
+        else:
+            raise ArithmeticError(f"{type(other)} type isn't supported!")
 
 
 class Wei(Unit):
@@ -456,19 +588,27 @@ class Ether(Unit):
 
 # todo: сделать самостоятельно
 class KEther(Unit):
-    pass
+    def __init__(self, amount: Union[int, float, str, Decimal]) -> None:
+        super().__init__(amount, 'kether')
 
 
 # todo: сделать самостоятельно
 class MEther(Unit):
-    pass
+    def __init__(self, amount: Union[int, float, str, Decimal]) -> None:
+        super().__init__(amount, 'mether')
 
 
 # todo: сделать самостоятельно
 class GEther(Unit):
-    pass
+    def __init__(self, amount: Union[int, float, str, Decimal]) -> None:
+        super().__init__(amount, 'gether')
 
 
 # todo: сделать самостоятельно
 class TEther(Unit):
-    pass
+    def __init__(self, amount: Union[int, float, str, Decimal]) -> None:
+        super().__init__(amount, 'tether')
+
+u_1 = Unit(amount=10, unit='ether')
+u_2 = Unit(amount=9, unit='ether')
+
