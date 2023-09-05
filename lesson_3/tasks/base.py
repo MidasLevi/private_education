@@ -7,7 +7,10 @@ from py_eth_async.data.models import TokenAmount
 
 from data.config import logger
 
-
+""""
+Базовый алгоритм с логикой и функциями для реализации алгоритмов под отдельные протоколы
+От класса Base будут наследоваться все отдельные алгоритмы
+"""
 class Base:
     def __init__(self, client: Client):
         self.client = client
