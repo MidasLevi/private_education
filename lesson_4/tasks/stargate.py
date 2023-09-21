@@ -22,11 +22,12 @@ from web3.contract import AsyncContract
 
 from tasks.base import Base
 from py_eth_async.data.models import TxArgs, TokenAmount
-from py_eth_async.data.models import Networks
+from py_eth_async.data.models import Networks, Network
+from py_eth_async.client import Client
 
 from data.config import logger
 from data.models import Contracts
-
+from eth_typing import ChecksumAddress
 
 class Stargate(Base):
     contract_data = {
@@ -55,6 +56,13 @@ class Stargate(Base):
             'stargate_chain_id': 102,
             'src_pool_id': 1,
             'dst_pool_id': 2,
+        },
+        Networks.Optimism.name: {
+            'usdc_contract': Contracts.OPTIMISM_USDC,
+            'stargate_contract': Contracts.OPTIMISM_STARGATE,
+            'stargate_chain_id': 111,
+            'src_pool_id': 1,
+            'dst_pool_id': 1,
         }
     }
 
@@ -237,5 +245,37 @@ class Stargate(Base):
         except Exception as e:
             return f'{failed_text}: {e}'
 
+    @staticmethod
+    async def get_network_with_usdc(address: ChecksumAddress) -> Optional[Network]:
+        supported_networks = [Networks.Optimism, Networks.Arbitrum, Networks.Avalanche, Networks.Polygon] # лист с поддерживаемыми транзакциям
+        result_network = None
+        max_balance = TokenAmount(amount=0)
+        for network in supported_networks: # цикл для перебора поддерживаемых сетей, network это элемент списка supported networks
+            client = Client(network=network) # создание клиента, не передаем приватник тк балансы будем смотреть по адресу
+            usdc_balance = await client.wallet.balance(
+                token=Stargate.contract_data[network.name]['usdc_contract'], address=address)
 
-    # todo: написать функцию поиска usdc по доступным сетям
+                # Объяснение
+
+                # 1) Достаем токен, обращаемся к общему классу которые отвечает за логику исполнения транзакций: тут это Stargate
+                # 2) Обращаемся contract_data где хранятся нужные элементы (сети)
+                # 3) Обращаемся к network.name - network это элемент списка поддерижваемых сетей + name
+                # Это надо для обращения к нужному параметру внутри сети, в данному случае usdc_contract
+                # 4) Обращаемся к USDC контракту
+                # 5) Передаем адрес, который передавали в функцию get_network_with_usdc
+
+
+            if float(usdc_balance.Ether) > float(max_balance.Ether): # Условие для сравнение балансов
+                max_balance = usdc_balance # если условие верное, то max_balance равняется балансу USDC сети
+                result_network = network # если условие верное, то result_netwokr равняется текущей USDC сети
+        return result_network
+
+async def main(): # создаём асинхронную функцию исполнения
+    from web3 import  Web3
+    # переменная результата исполнения
+    # Обращаемся к функции внутри класса Stargate, передаем адрес в чексум формате
+    res = await Stargate.get_network_with_usdc(address=Web3.to_checksum_address('0x6da5c2f0b2c32901126c204e0c36edc4ae09f8f3'))
+    print(res.name) # вводим имя сети
+
+if __name__ == '__main__': # исполняем асинхронную функцию
+    loop = asyncio.new_event_loop()

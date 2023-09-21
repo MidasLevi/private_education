@@ -67,6 +67,7 @@ async def main():
     # ))
 
     woofi = WooFi(client=client) # инициализируем переменную которая обращается к классу WooFi из woofi.py
+    """
     res_eth_to_usdc = await woofi.swap_eth_to_usdc(amount=TokenAmount(amount=0.03))
     if 'Failed' in res_eth_to_usdc:
         logger.error(res_eth_to_usdc)
@@ -74,7 +75,7 @@ async def main():
         logger.success(res_eth_to_usdc)
 
     await asyncio.sleep(5)
-    
+    """
     res_usdc_to_eth = await woofi.swap_usdc_to_eth() # значений amount нет, свапается весь баланс
     if 'Failed' in res_usdc_to_eth:
         logger.error(res_usdc_to_eth)
@@ -82,7 +83,7 @@ async def main():
         logger.success(res_usdc_to_eth)
 
     await asyncio.sleep(5)
-
+    """
     res_eth_to_usdt = await woofi.swap_eth_to_usdt(amount=TokenAmount(amount=0.0001))
     if 'Failed' in res_eth_to_usdt:
         logger.error(res_eth_to_usdt)
@@ -110,7 +111,7 @@ async def main():
         logger.error(res_wbtc_to_eth)
     else:
         logger.success(res_wbtc_to_eth)
-
+    """
 
 """"
     tx_hash = '0xf9bd50990974b8107a8ef1a2d2dc79c5de6114b42d5533827068ddccabe35240'

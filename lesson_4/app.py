@@ -1,7 +1,7 @@
 import asyncio
 from loguru import logger
 
-from py_eth_async.data.models import Networks, TokenAmount
+from py_eth_async.data.models import Networks, TokenAmount, Network
 from py_eth_async.client import Client
 
 from data.models import Contracts
@@ -11,19 +11,20 @@ from tasks.woofi import WooFi
 
 
 async def main():
-    client = Client(private_key=private_key1, network=Networks.Avalanche)
+    client = Client(private_key=private_key1, network=Networks.Arbitrum)
     stargate = Stargate(client=client)
 
-    # status = await stargate.send_usdc(
-    #     to_network_name=Networks.Polygon.name,
-    #     amount=TokenAmount(0.5, decimals=6)
-    # )
-
-    status = await stargate.send_usdc_from_avalanche_to_usdt_bsc(
-        amount=TokenAmount(0.5, decimals=6),
-        dest_fee=TokenAmount(0.005),
-        max_fee=1.1
+    status = await stargate.send_usdc(
+        to_network_name=Networks.Optimism.name,
+        amount=TokenAmount(10, decimals=6),
+        max_fee=1.5
     )
+
+    # status = await stargate.send_usdc_from_avalanche_to_usdt_bsc(
+    #     amount=TokenAmount(0.5, decimals=6),
+    #     dest_fee=TokenAmount(0.005),
+    #     max_fee=1.1
+    # )
     # $5.55
     # $0.74
 
